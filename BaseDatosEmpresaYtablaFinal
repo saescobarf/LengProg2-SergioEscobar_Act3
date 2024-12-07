@@ -1,0 +1,125 @@
+--AQUI CREO LA TABLA DE EMPLEADOS
+--DROP TABLE empresa.dbo.empleados
+CREATE TABLE empresa.dbo.empleados (
+    num_empleado INT IDENTITY(1,1) PRIMARY KEY,   
+    nombre VARCHAR(50) NOT NULL, 
+	apellido_paterno VARCHAR(50) NOT NULL,
+	apellido_materno VARCHAR(50) NOT NULL, 
+	fecha_nacimiento DATE NOT NULL,
+	num_centro INT NOT NULL,
+	RFC VARCHAR(13) NOT NULL,
+    id_puesto INT NOT NULL,
+	es_directivo BIT NOT NULL,
+    fecha_alta DATE               
+);
+
+--SELECT *FROM empresa.dbo.empleados
+
+--DROP TABLE empresa.dbo.centros
+CREATE TABLE empresa.dbo.centros (
+    num_centro INT PRIMARY KEY NOT NULL,   
+    nom_centro VARCHAR(50) NOT NULL, 
+	ciudad VARCHAR(50) NOT NULL,              
+);
+
+--SELECT *FROM empresa.dbo.centros
+
+--DROP TABLE empresa.dbo.puestos
+CREATE TABLE empresa.dbo.puestos (
+    id_puesto INT IDENTITY(1,1) PRIMARY KEY,   
+    puesto VARCHAR(30) NOT NULL, 
+	desc_puesto VARCHAR(70) NOT NULL,              
+);
+
+--SELECT *FROM empresa.dbo.puestos
+
+--DROP TABLE empresa.dbo.directivos
+CREATE TABLE empresa.dbo.directivos (
+    num_empleado INT PRIMARY KEY NOT NULL,   
+    num_centro_sup INT NOT NULL, 
+	combustible_apoyo int NOT NULL,              
+);
+--SELECT *FROM empresa.dbo.directivos
+
+--CON ESTE QUERY REGISTRO A LOS EMPLEADOS CAMBIANDO LAS VARIABLES
+DECLARE 
+@nombre VARCHAR(50) = 'Fernanda',
+@apellido_paterno VARCHAR(50) = 'Angulo',
+@apellido_materno VARCHAR(50) = 'Nieto',
+@fecha_nacimiento DATE = '1994-12-25',
+@num_centro INT = 000203,
+@RFC VARCHAR(13),
+@id_puesto INT = 5,
+@es_directivo BIT = 1,
+@fecha_alta DATE = GETDATE();
+
+SET @RFC = 
+UPPER(LEFT(@apellido_paterno, 1) + 
+SUBSTRING(@apellido_paterno, PATINDEX('%[AEIOU]%', @apellido_paterno), 1) + 
+LEFT(@apellido_materno, 1) + LEFT(@nombre, 1) + 
+RIGHT(YEAR(@fecha_nacimiento), 2) + 
+FORMAT(@fecha_nacimiento, 'MM') + 
+FORMAT(@fecha_nacimiento, 'dd') + 
+CHAR(65 + FLOOR(RAND() * 26)) + 
+CHAR(65 + FLOOR(RAND() * 26)) + 
+CHAR(65 + FLOOR(RAND() * 26)));
+
+INSERT INTO empresa.dbo.empleados (nombre, apellido_paterno, apellido_materno, fecha_nacimiento, num_centro, RFC, id_puesto, es_directivo, fecha_alta)
+VALUES (@nombre, @apellido_paterno, @apellido_materno, @fecha_nacimiento, @num_centro, @RFC, @id_puesto, @es_directivo, @fecha_alta);
+
+--SELECT * FROM empresa.dbo.empleados;
+
+
+--CON ESTE QUERY REGISTRO A LOS CENTROS CAMBIANDO LAS VARIABLES
+INSERT INTO empresa.dbo.centros (num_centro, nom_centro, ciudad)
+VALUES 
+(000201, 'Tiendas Angel Flores Ropa', 'Culiacan'),
+(000202, 'Tiendas Angel Flores Muebles', 'Culiacan'),
+(000203, 'Tiendas Angel Flores Cajas', 'Culiacan'),
+(049001, 'La Primavera Ropa', 'Culiacan'),
+(049002, 'La Primavera Muebles', 'Culiacan'),
+(049003, 'La Primavera Cajas', 'Culiacan');
+
+--SELECT * FROM empresa.dbo.centros
+
+--CON ESTE QUERY REGISTRO A LOS PUESTOS CAMBIANDO LAS VARIABLES
+INSERT INTO empresa.dbo.puestos (puesto, desc_puesto)
+VALUES 
+('LIDER DE PROYECTO', 'planeacion y ejecucion de proyectos'),
+('ANALISTA COMERCIAL', 'analista numerico'),
+('GERENTE', 'Gerente de area'),
+('GERENTE NACIONAL', 'Gerente nacional de la cadena de suministro'),
+('GERENTE DIVISIONAL', 'Gerente de la division de cadena de suministro');
+
+--SELECT * FROM empresa.dbo.puestos
+
+--CON ESTE QUERY REGISTRO A LOS DIRECTIVOS CAMBIANDO LAS VARIABLES
+INSERT INTO empresa.dbo.directivos (num_empleado, num_centro_sup, combustible_apoyo)
+VALUES 
+(1, 1000, 1),
+(3, 1000,1),
+(4, 1000,0),
+(6, 2000,1);
+--SELECT * FROM empresa.dbo.directivos
+
+
+
+           
+--AQUI SE GENERA LA TABLA FINAL
+
+--DROP TABLE empresa.dbo.informacionEmpleados;
+SELECT a.num_empleado, 
+	concat(a.nombre, ' ', a.apellido_paterno, ' ', a.apellido_materno) as nombre_completo, 
+	CONVERT(VARCHAR(10), a.fecha_nacimiento, 105) AS fecha_nacimiento, 
+	a.rfc as RFC,
+	b.nom_centro as nom_centro,
+	desc_puesto as desc_puesto,
+	CASE WHEN es_directivo = 1 THEN 'Si' ELSE 'No' END as es_directivo
+INTO empresa.dbo.informacionEmpleados
+FROM empresa.dbo.empleados a
+LEFT JOIN empresa.dbo.centros b
+ON a.num_centro = b.num_centro
+LEFT JOIN empresa.dbo.puestos c
+ON a.id_puesto = c.id_puesto
+
+SELECT * FROM empresa.dbo.informacionEmpleados
